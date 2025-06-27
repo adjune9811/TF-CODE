@@ -1,0 +1,71 @@
+trigger:
+- main
+
+stages:
+- stage: Build
+  jobs:
+  - job: Build
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    # ✅ Install Terraform 1.6.6
+    - task: TerraformInstaller@1
+      displayName: Install Terraform
+      inputs:
+        terraformVersion: '1.6.6'
+
+    # ✅ Terraform Init (NO use_azuread_auth)
+    - task: TerraformTask@5
+      displayName: Tf init
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        backendServiceArm: 'Azure subscription 1(e3a8d272-fe06-4bf5-8de2-bd4a17760d28)'
+        backendAzureRmResourceGroupName: 'terraform-storage-rg'
+        backendAzureRmStorageAccountName: 'addsterraformstate201'
+        backendAzureRmContainerName: 'prod-tfstate'
+        backendAzureRmKey: 'prod.terraform.tfstate'
+
+    # ✅ Terraform Validate
+    - task: TerraformTask@5
+      displayName: Tf validate
+      inputs:
+        provider: 'azurerm'
+        command: 'validate'
+
+    # ✅ Terraform Format
+    - task: TerraformTask@5
+      displayName: Tf format
+      inputs:
+        provider: 'azurerm'
+        command: 'custom'
+        commandOptions: 'fmt'
+        outputTo: 'console'
+        environmentServiceNameAzureRM: 'Azure subscription 1(e3a8d272-fe06-4bf5-8de2-bd4a17760d28)'
+
+    # ✅ Terraform Plan
+    - task: TerraformTask@5
+      displayName: Tf plan
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        commandOptions: '-out=$(Build.SourcesDirectory)/tfplanfile'
+        environmentServiceNameAzureRM: 'Azure subscription 1(e3a8d272-fe06-4bf5-8de2-bd4a17760d28)'
+
+    # ✅ Archive the Terraform Plan and Files
+    - task: ArchiveFiles@2
+      displayName: Tf Archive
+      inputs:
+        rootFolderOrFile: '$(Build.SourcesDirectory)/'
+        includeRootFolder: true
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        replaceExistingArchive: true
+
+    # ✅ Publish Build Artifact
+    - task: PublishBuildArtifacts@1
+      displayName: Tf Publish
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: '$(Build.BuildId)-build'
+        publishLocation: 'Container'
