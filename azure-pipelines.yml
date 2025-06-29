@@ -20,7 +20,7 @@ steps:
     backendServiceArm: 'AZ-SPN-idmay25'
     backendAzureRmResourceGroupName: 'terraform-storage-rg'
     backendAzureRmStorageAccountName: 'addsterraformstate201'
-    backendAzureRmContainerName: 'prod-tfstate'
+    backendAzureRmContainerName: 'tfstatefiles'
     backendAzureRmKey: 'prodterraform.tfstate'
 
 # Terraform Plan
