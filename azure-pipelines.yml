@@ -1,71 +1,43 @@
 trigger:
-- main
+  - main
 
-stages:
-- stage: Build
-  jobs:
-  - job: Build
-    pool:
-      vmImage: 'ubuntu-latest'
-    steps:
-    # ✅ Install Terraform 1.6.6
-    - task: TerraformInstaller@1
-      displayName: Install Terraform
-      inputs:
-        terraformVersion: '1.6.6'
+pool:
+  vmImage: ubuntu-latest
 
-    # ✅ Terraform Init (NO use_azuread_auth)
-    - task: TerraformTask@5
-      displayName: Tf init
-      inputs:
-        provider: 'azurerm'
-        command: 'init'
-        backendServiceArm: 'Azure subscription 1(e3a8d272-fe06-4bf5-8de2-bd4a17760d28)'
-        backendAzureRmResourceGroupName: 'terraform-storage-rg'
-        backendAzureRmStorageAccountName: 'addsterraformstate201'
-        backendAzureRmContainerName: 'prod-tfstate'
-        backendAzureRmKey: 'prod.terraform.tfstate'
+steps:
+# Install Terraform
+- task: TerraformInstaller@1
+  displayName: 'Install Terraform'
+  inputs:
+    terraformVersion: 'latest'
 
-    # ✅ Terraform Validate
-    - task: TerraformTask@5
-      displayName: Tf validate
-      inputs:
-        provider: 'azurerm'
-        command: 'validate'
+# Terraform Init (Backend config is now in your .tf files)
+- task: TerraformTaskV4@4
+  displayName: 'Terraform Init'
+  inputs:
+    provider: 'azurerm'
+    command: 'init'
+    backendServiceArm: 'AZ-SPN-idmay25'
+    backendAzureRmResourceGroupName: 'terraform-storage-rg'
+    backendAzureRmStorageAccountName: 'addsterraformstate201'
+    backendAzureRmContainerName: 'prod-tfstate'
+    backendAzureRmKey: 'prodterraform.tfstate'
 
-    # ✅ Terraform Format
-    - task: TerraformTask@5
-      displayName: Tf format
-      inputs:
-        provider: 'azurerm'
-        command: 'custom'
-        commandOptions: 'fmt'
-        outputTo: 'console'
-        environmentServiceNameAzureRM: 'Azure subscription 1(e3a8d272-fe06-4bf5-8de2-bd4a17760d28)'
+# Terraform Plan
+- task: TerraformTaskV4@4
+  displayName: 'Terraform Plan'
+  inputs:
+    provider: 'azurerm'
+    command: 'plan'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+    environmentServiceNameAzureRM: 'AZ-SPN-idmay25'
 
-    # ✅ Terraform Plan
-    - task: TerraformTask@5
-      displayName: Tf plan
-      inputs:
-        provider: 'azurerm'
-        command: 'plan'
-        commandOptions: '-out=$(Build.SourcesDirectory)/tfplanfile'
-        environmentServiceNameAzureRM: 'Azure subscription 1(e3a8d272-fe06-4bf5-8de2-bd4a17760d28)'
-
-    # ✅ Archive the Terraform Plan and Files
-    - task: ArchiveFiles@2
-      displayName: Tf Archive
-      inputs:
-        rootFolderOrFile: '$(Build.SourcesDirectory)/'
-        includeRootFolder: true
-        archiveType: 'zip'
-        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-        replaceExistingArchive: true
-
-    # ✅ Publish Build Artifact
-    - task: PublishBuildArtifacts@1
-      displayName: Tf Publish
-      inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-        ArtifactName: '$(Build.BuildId)-build'
-        publishLocation: 'Container'
+# Terraform Apply
+- task: TerraformTaskV4@4
+  displayName: 'Terraform Apply'
+  inputs:
+    provider: 'azurerm'
+    command: 'apply'
+    commandOptions: '--auto-approve'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+    environmentServiceNameAzureRM: 'AZ-SPN-idmay25'
