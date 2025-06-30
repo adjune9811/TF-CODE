@@ -29,8 +29,7 @@ steps:
   inputs:
     provider: 'azurerm'
     command: 'plan'
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    environmentServiceNameAzureRM: 'AZ-SPN-idmay25'
+    environmentServiceNameAzureRM: 'Azure subscription 1(e3a8d272-fe06-4bf5-8de2-bd4a17760d28)'
 
 # Terraform Apply
 - task: TerraformTaskV4@4
