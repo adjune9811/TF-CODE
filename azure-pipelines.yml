@@ -17,7 +17,7 @@ steps:
   inputs:
     provider: 'azurerm'
     command: 'init'
-    backendServiceArm: 'AZ-SPN-idmay25'
+    backendServiceArm: 'devops-spn'
     backendAzureRmResourceGroupName: 'terraform-storage-rg'
     backendAzureRmStorageAccountName: 'addsterraformstate201'
     backendAzureRmContainerName: 'tfstatefiles'
@@ -29,7 +29,7 @@ steps:
   inputs:
     provider: 'azurerm'
     command: 'plan'
-    environmentServiceNameAzureRM: 'Azure subscription 1(e3a8d272-fe06-4bf5-8de2-bd4a17760d28)'
+    environmentServiceNameAzureRM: 'devops-spn'
 
 # Terraform Apply
 - task: TerraformTaskV4@4
@@ -38,5 +38,4 @@ steps:
     provider: 'azurerm'
     command: 'apply'
     commandOptions: '--auto-approve'
-    workingDirectory: '$(System.DefaultWorkingDirectory)'
-    environmentServiceNameAzureRM: 'AZ-SPN-idmay25'
+    environmentServiceNameAzureRM: 'devops-spn'
